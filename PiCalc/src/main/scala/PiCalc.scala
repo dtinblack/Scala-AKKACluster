@@ -1,6 +1,8 @@
+// PiCalc.scala
+//
 // Calculating Pi using Scala
 
-package pi_simple
+package com.example.picalc
 
 import scala.annotation.tailrec
 
