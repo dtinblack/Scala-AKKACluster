@@ -1,6 +1,6 @@
 // PiCalc.scala
 //
-// Calculating Pi using Scala
+// Estimating Pi written in Scala
 
 package com.example.picalc
 
