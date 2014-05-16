@@ -1,12 +1,12 @@
 // PiCalc.scala
 //
-// Estimating Pi written in Scala
+// Estimating Pi ( using Leibniz's Formula )  written in Scala
 
 package com.example.picalc
 
 import scala.annotation.tailrec
 
-object Pi {
+object PiCalc {
    
   def calculatePi(numberOfElements: Int) : Double = {
      @tailrec
@@ -22,11 +22,12 @@ object Pi {
   
     val start = System.currentTimeMillis 
     
-    val numberOfElements = 1000000
+    val numberOfElements = 100000
       
     val pi = calculatePi(numberOfElements)
-    
-    println(s"\n\tpi approximation: ${pi}, took: ${System.currentTimeMillis - start} millis")
+        
+    println("\n\tPi approximation: \t\t%s\n\tCalculation time: \t\t%s"
+             .format(pi, (System.currentTimeMillis - start)))
 
   }
 }

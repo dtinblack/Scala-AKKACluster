@@ -2,33 +2,27 @@
 //
 // Estimating Pi written AKKA and Scala
 
+package com.example.piakka
+
 import akka.actor._
 import akka.routing.RoundRobinRouter
-
-import scala.concurrent.duration.Duration
 import scala.concurrent.duration._
+import scala.annotation.tailrec
 
-object Pi extends App {
+object PiAKKA extends App {                                  // Bootstrap the application
 
 calculate(nrOfWorkers = 4, nrOfElements = 10000, nrOfMessages = 10000)
  
-sealed trait PiMessage
-case object Calculate extends PiMessage
-case class Work(start: Int, nrOfElements: Int ) extends PiMessage
-case class Result(value: Double) extends PiMessage
-case class PiApproximation(pi: Double, duration: Duration )
-
 class Listener extends Actor {
 
      def receive = {
      
          case PiApproximation(pi, duration ) =>
-         println("\n\tPi approximation: \t\t%s\n\tCalculation time: \t%s"
+         println("\n\tPi approximation: \t\t%s\n\tCalculation time: \t\t%s"
              .format(pi, duration))
          context.system.shutdown()
       }
 }         
-     
      
 class Master(nrOfWorkers: Int, nrOfMessages: Int, nrOfElements: Int, listener: ActorRef ) extends Actor {
 
@@ -54,7 +48,9 @@ class Master(nrOfWorkers: Int, nrOfMessages: Int, nrOfElements: Int, listener: A
          // Stop this Actor and all its supervised children
          context.stop(self)
         }             
-   }   
+   }
+   
+  
 
 }
 
@@ -62,17 +58,39 @@ class Worker extends Actor {
 
    def receive = { 
        case Work(start, nrOfElements ) => 
+
           sender ! Result(calculatePiFor(start, nrOfElements)) // preform work
-    }      
+    }  
+        
 }
 
 def calculatePiFor(start: Int, nrOfElements: Int ): Double = {
 
+//    println("start: %s number of elements %s".format(start, nrOfElements))
+
+/*    
     var acc = 0.0;
+    
     for( i <- start until ( start + nrOfElements ) )
         acc += 4.0 * (1 - ( i % 2 ) * 2 ) / ( 2 * i + 1 )
+    
     acc
+*/    
+
+
+
+     @tailrec
+     def calculatePi(start: Int, limit: Int, acc: Double) : Double =
+       start match {
+         case x if x == limit => acc
+         case _ => calculatePi(start + 1, limit, acc + 4.0 * (1 - (start % 2) * 2) / (2 * start + 1))
+       }
+
+    calculatePi(start, start + nrOfElements, 0.0)
+  
+       
 }
+
  
 def calculate(nrOfWorkers: Int, nrOfElements: Int, nrOfMessages: Int) {
     // Create an Akka system
@@ -90,7 +108,7 @@ def calculate(nrOfWorkers: Int, nrOfElements: Int, nrOfMessages: Int) {
     master ! Calculate
  
   }
+  
 
-
-} // End of extended App
+ } // End of extended App
 
