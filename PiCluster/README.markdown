@@ -25,6 +25,8 @@ TODO
 <li>TODO</li>
 </ol>
 
+sbt "run-main com.example.picluster.PiApp"
+
 # Thanks
 
 TODO

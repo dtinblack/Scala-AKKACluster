@@ -9,7 +9,7 @@ import akka.routing.RoundRobinRouter
 import scala.concurrent.duration._
 import scala.annotation.tailrec
 
-object PiAKKA extends App {                                  // Bootstrap the application
+object PiAKKA extends App {    // Bootstrap the application
 
 calculate(nrOfWorkers = 4, nrOfElements = 10000, nrOfMessages = 10000)
  
@@ -50,8 +50,6 @@ class Master(nrOfWorkers: Int, nrOfMessages: Int, nrOfElements: Int, listener: A
         }             
    }
    
-  
-
 }
 
 class Worker extends Actor {
@@ -64,20 +62,7 @@ class Worker extends Actor {
         
 }
 
-def calculatePiFor(start: Int, nrOfElements: Int ): Double = {
-
-//    println("start: %s number of elements %s".format(start, nrOfElements))
-
-/*    
-    var acc = 0.0;
-    
-    for( i <- start until ( start + nrOfElements ) )
-        acc += 4.0 * (1 - ( i % 2 ) * 2 ) / ( 2 * i + 1 )
-    
-    acc
-*/    
-
-
+def calculatePiFor(start: Int, nrOfElements: Int ): Double = {   // Recursive implementation
 
      @tailrec
      def calculatePi(start: Int, limit: Int, acc: Double) : Double =
@@ -87,12 +72,12 @@ def calculatePiFor(start: Int, nrOfElements: Int ): Double = {
        }
 
     calculatePi(start, start + nrOfElements, 0.0)
-  
-       
+         
 }
 
  
 def calculate(nrOfWorkers: Int, nrOfElements: Int, nrOfMessages: Int) {
+    
     // Create an Akka system
     val system = ActorSystem("PiSystem")
  
