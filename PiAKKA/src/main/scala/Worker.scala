@@ -16,44 +16,24 @@ object Worker {
 }
 
 
-
-
 class Worker extends Actor {
 
    import Master._
-   
- 
-     
-   private def calculatePiFor(start: Int, nrOfElements: Int): Double = {
-
-    var acc = 0.0;
-    
-    println("Start: " + start )
-    
-    for( i <- start until ( start + nrOfElements ) )
-        acc += 4.0 * (1 - ( i % 2 ) * 2 ) / ( 2 * i + 1 )
-    acc
-   
-   }
-   
-
-
-/*
-
-      @tailrec
-     private def calculatePiFor(start: Int, limit: Int, acc: Double) : Double =
-       start match {
+         
+     def calculatePi(start: Int, numberOfElements: Int) : Double = {
+     @tailrec
+     def calculatePiFor(start: Int, limit: Int, acc: Double, count: Int) : Double =
+         count match {
          case x if x == limit => acc
-         case _ => println("Start: " + start + " Limit: " + limit + start)
-                   calculatePiFor(start + 1, limit, acc + 4.0 * (1 - (start % 2) * 2) / (2 * start + 1))
-                   
-    } 
-   
-*/
+         case _ => calculatePiFor(start + 1, limit, acc + 4.0 * (1 - (start % 2) * 2) / (2 * start + 1), 
+                   count + 1)
+       }
+     calculatePiFor(start, numberOfElements , 0.0, 0)
+   }
 
    def receive = { 
        case Work(start, nrOfElements ) => 
-          sender ! Result(calculatePiFor(start, nrOfElements)) // preform work
+          sender ! Result(calculatePi(start, nrOfElements)) // preform work
     }      
 
 }
