@@ -20,7 +20,7 @@ class Listener extends Actor with ActorLogging {
      def receive = {
      
          case PiApproximation(pi, duration ) =>
-         println("\n\tPi approximation: \t\t%s\n\tCalculation time: \t%s"
+         println("\n\tPi approximation: \t\t%s\n\tCalculation time: \t\t%s"
              .format(pi, duration))
          context.system.shutdown()
       }
