@@ -6,6 +6,8 @@ package com.example.piakka
 
 import akka.actor.{Actor, ActorRef, ActorLogging, Terminated}
 import scala.collection.mutable.{Map, Queue}
+import scala.concurrent.duration._
+import scala.math.abs
 
 
 object Master {
@@ -13,133 +15,88 @@ object Master {
    case class WorkToBeDone( work: Any )
    case object WorkIsReady
    case object NoWorkToBeDone
+   
+   case class Work(start: Int, numberOfElements: Int)
+   case class Calculate(worker: ActorRef, calculation: Work) 
+   case class Result(worker: ActorRef, value: Double)
+
+
 
 }
 
-class Master extends Actor with ActorLogging {
+class Master ( listener: ActorRef ) extends Actor with ActorLogging {
 
+    import Listener._
     import Master._
     import Worker._
-
-   // keep track of workers and their activity
+       
+    var pi: Double = _
+    
+    val start: Long = System.currentTimeMillis
    
-   val workers = Map.empty[ActorRef, Option[Tuple2[ActorRef, Any]]]
+   // Step length of the calculation
    
-   // create a queue to keep track of who is doing what
+   val numberOfElements: Int = 1000  
    
-   val workQ = Queue.empty[Tuple2[ActorRef, Any]]
+   var startElement: Int = 0
    
-//   println("Master created")
+   var previousPi: Double = 0.0
    
-   def notifyWorkers(): Unit = {
+   // Used to calculate the accuracy of the value of Pi
    
-//      println("Notifying workers")
+   val error: Double = 0.0000000001
    
-      if(!workQ.isEmpty) {
+   // Work Queue
+   
+   val workQueue = Queue.empty[Work]
       
-         workers.foreach {
-             case ( worker, m ) if ( m.isEmpty ) => worker ! WorkIsReady
-             case _ => 
-         }     
-      
-      } 
+   // On startup create packages of work
+   
+   override def preStart() = {
+   
+       var i = 0
+       
+       // initial value
+              
+       for ( i <- 0 to 10 ) {
+       
+       workQueue += Work(startElement, numberOfElements)
+       
+       startElement += numberOfElements
+       
+       }
+       
+       log.info("Work packages generated: {}", workQueue)
+   
    }
    
+    
    
   def receive = {
   
-      // Worker created - add to the list
-  
-      case WorkerCreated(worker) =>
-            log.info("Worker created: {}", worker)
-            context.watch(worker)
-            workers += ( worker -> None) 
-  
-      // Worker wants more work
-      
-      case WorkerRequestsWork(worker) =>
-        log.info("Worker requests work: {}", worker)
-        if( workers.contains(worker)) {
-           if(workQ.isEmpty)
-              worker ! NoWorkToBeDone
-            else if (workers(worker) == None) {
-            val (workSender, work) = workQ.dequeue()
-            workers += (worker -> Some(workSender -> work))
-            worker.tell(WorkToBeDone(work), workSender)
-            }   
-        }
-        
-        // Worker has completed its work 
-        
-         
-     case WorkIsDone(worker) =>
-      if (!workers.contains(worker))
-        log.info("Blurgh! {} said it's done work but we didn't know about him", worker)
-      else
-        workers += (worker -> None)
-
-    // Worker has died - need to make sure that work is completed
-    
-    case Terminated(worker) =>
-      if (workers.contains(worker) && workers(worker) != None) {
-        log.info("Blurgh! {} died while processing {}", worker, workers(worker))
-        // Send the work that it was doing back to ourselves for processing
-        val (workSender, work) = workers(worker).get
-        self.tell(work, workSender)
-      }
-      workers -= worker
-     
-     case work => 
-          log.info("Queueing {}", work)
-          workQ.enqueue(sender -> work)
-          notifyWorkers()
-  
+                        
+     case WorkerCreated(worker) => listener ! WorkerJoined(worker)
+                                    worker ! WorkIsReady 
+                                    
+     case SendWork(worker) =>  worker ! Calculate(worker, workQueue.dequeue()) 
+                        
+     case Result(worker, value) => pi += value                
+                                if( abs( previousPi - pi ) <= error ) {
+                                        log.info("Value of Pi found after:" + startElement)
+                                        listener ! PiApproximation(pi, duration = (System.currentTimeMillis - start).millis)
+                                        context.stop(self)
+                                    } else {
+                                       previousPi = pi
+                                       // add another package of work to the workQueue
+                                       startElement += numberOfElements
+                                       workQueue += Work(startElement, numberOfElements) 
+                                       self ! SendWork(worker) 
+                                   }                    
+                                                                 
   }
+  
+ 
 
 } // End of Class Master
 
 
-
-/*
-
-object Master {
-
- case object Calculate
-// case object Work 
- case class Work(start: Int, nrOfElements: Int )
- case class Result(value: Double)
-
-}
-
-class Master(nrOfWorkers: Int, nrOfMessages: Int, nrOfElements: Int, listener: ActorRef ) extends Actor {
-
-   import Master._
-   import CalculatePi._
-
-   var pi: Double = _
-   var nrOfResults: Int = _
-   val start: Long = System.currentTimeMillis
-   
-   val workerRouter = context.actorOf(
-      Props[Worker].withRouter(RoundRobinRouter(nrOfWorkers)), name = "workerRouter")
-      
-   def receive = {
-   
-     // handle messages
-   
-     case Calculate => 
-        for( i <- 0 until nrOfMessages ) workerRouter ! Work( i * nrOfElements, nrOfElements )
-     
-     case Result(value) =>
-        pi += value
-        nrOfResults += 1
-        if( nrOfResults == nrOfMessages ) { // send the results to the listener
-          listener ! PiApproximation(pi, duration = (System.currentTimeMillis - start).millis)
-         // Stop this Actor and all its supervised children
-         context.stop(self)
-        }             
-   }   
-
-}
-
-*/

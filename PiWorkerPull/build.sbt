@@ -1,4 +1,4 @@
-name := "PiAKKA"
+name := "PiWorkerPull"
 
 version := "1.0"
 

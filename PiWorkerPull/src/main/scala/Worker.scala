@@ -13,31 +13,36 @@ object Worker {
     case class WorkerRequestsWork(worker: ActorRef)
     case class WorkIsDone(worker: ActorRef)
     
+    case class SendWork(worker: ActorRef)
+    
+    
+    
 }
 
 
-abstract class Worker(masterLocation: ActorPath)
-  extends Actor with ActorLogging {
+class Worker(masterLocation: ActorPath) extends Actor with ActorLogging {
   
   import Master._
   import Worker._
 
-  // We need to know where the master is
+  // Find the location of the Master 
+   
   val master = context.actorFor(masterLocation)
   
-//  println("Worker created")
-
-  // This is how our derivations will interact with us.  It
-  // allows dervations to complete work asynchronously
-  case class WorkComplete(result: Any)
-
-  // Required to be implemented for the 
-  // Pi Calculation
-  
-  def doWork(workSender: ActorRef, work: Any): Unit
-
   // Notify the Master that we're alive
   override def preStart() = master ! WorkerCreated(self)
+  
+  def calculatePi(start: Int, numberOfElements: Int) : Double = {
+       @tailrec
+       def calculatePiFor(start: Int, limit: Int, acc: Double, count: Int) : Double =
+         count match {
+         case x if x == limit => acc
+         case _ => calculatePiFor(start + 1, limit, acc + 4.0 * (1 - (start % 2) * 2) / (2 * start + 1), 
+                   count + 1)
+       }
+       calculatePiFor(start, numberOfElements , 0.0, 0)
+   }
+    
 
   // This is the state we're in when we're working on something.
   // In this state we can deal with messages in a much more
@@ -51,12 +56,16 @@ abstract class Worker(masterLocation: ActorPath)
     case WorkToBeDone(_) =>
       log.info("Yikes. Master told me to do work, while I'm working.")
     // Our derivation has completed its task
+    
+/*    
+    
     case WorkComplete(result) =>
-      log.info("Work is complete.  Result {}.", result)
+      log.info("Work is complete.  Result {}.", result) /** prints result to the terminal **/
       master ! WorkIsDone(self)
       master ! WorkerRequestsWork(self)
       // We're idle now
       context.become(idle)
+*/      
   }
 
   // In this state we have no work to do.  There really are only
@@ -64,13 +73,16 @@ abstract class Worker(masterLocation: ActorPath)
   // we deal with them specially here
   def idle: Receive = {
     // Master says there's work to be done, let's ask for it
-    case WorkIsReady =>
-      log.info("Requesting work")
-      master ! WorkerRequestsWork(self)
+    case WorkIsReady => log.info("Requesting work from the Master")
+                         master ! SendWork(self)
+                                              
+    case Calculate(worker, Work(start, numberOfElements )) => 
+                         sender ! Result(worker, calculatePi(start, numberOfElements))
+
     // Send the work off to the implementation
     case WorkToBeDone(work) =>
       log.info("Got work {}", work)
-      doWork(sender, work)
+ //     doWork(sender, work)            //*** call to do some work ***//
       context.become(working(work))
     // We asked for it, but either someone else got it first, or
     // there's literally no work to be done
@@ -100,46 +112,6 @@ abstract class Worker(masterLocation: ActorPath)
 
 
 
-
-
-
-
-
-
-/*
-
-object Worker {
-
-//  case object Work
-
-   case class Work(start: Int, nrOfElements: Int )
-
-}
-
-
-class Worker extends Actor {
-
-   import Master._
-         
-     def calculatePi(start: Int, numberOfElements: Int) : Double = {
-     @tailrec
-     def calculatePiFor(start: Int, limit: Int, acc: Double, count: Int) : Double =
-         count match {
-         case x if x == limit => acc
-         case _ => calculatePiFor(start + 1, limit, acc + 4.0 * (1 - (start % 2) * 2) / (2 * start + 1), 
-                   count + 1)
-       }
-     calculatePiFor(start, numberOfElements , 0.0, 0)
-   }
-
-   def receive = { 
-       case Work(start, nrOfElements ) => 
-          sender ! Result(calculatePi(start, nrOfElements)) // preform work
-    }      
-
-}
-
-*/
 
 
 

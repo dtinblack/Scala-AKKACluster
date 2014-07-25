@@ -29,16 +29,6 @@ object PiSingleWorker {
   
       master ! Calculate
 
-
-
-
-
-
-  
-  
   }
   
-
-
-
 } // End of PiSingleWorker
