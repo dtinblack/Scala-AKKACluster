@@ -44,7 +44,7 @@ class Master ( listener: ActorRef ) extends Actor with ActorLogging {
    
    // Used to calculate the accuracy of the value of Pi
    
-   val error: Double = 0.0000000001
+   val error: Double = 0.00000000001
    
    // Work Queue
    
@@ -66,7 +66,7 @@ class Master ( listener: ActorRef ) extends Actor with ActorLogging {
        
        }
        
-       log.info("Work packages generated: {}", workQueue)
+//       log.info("Work packages generated: {}", workQueue)
    
    }
    
@@ -80,17 +80,21 @@ class Master ( listener: ActorRef ) extends Actor with ActorLogging {
                                     
      case SendWork(worker) =>  worker ! Calculate(worker, workQueue.dequeue()) 
                         
-     case Result(worker, value) => pi += value                
-                                if( abs( previousPi - pi ) <= error ) {
-                                        log.info("Value of Pi found after:" + startElement)
+     case Result(worker, value) => pi += value
+    //                            log.info("old value of pi = {} new value of pi = {}", previousPi, pi)                
+                                    if( abs( previousPi - pi ) <= error ) {
+                                     //   log.info("Value of Pi found after:" + startElement)
                                         listener ! PiApproximation(pi, duration = (System.currentTimeMillis - start).millis)
                                         context.stop(self)
                                     } else {
                                        previousPi = pi
                                        // add another package of work to the workQueue
                                        startElement += numberOfElements
+                                      // log.info("Start element = {}", startElement)
                                        workQueue += Work(startElement, numberOfElements) 
+                                      // log.info("Sending more work to Worker {} ", worker)
                                        self ! SendWork(worker) 
+                                      
                                    }                    
                                                                  
   }

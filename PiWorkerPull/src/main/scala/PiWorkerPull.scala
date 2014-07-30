@@ -34,6 +34,8 @@ object PiWorkerPull {
     val worker2 = worker("master")
     val worker3 = worker("master")
     val worker4 = worker("master")
+    val worker5 = worker("master")
+    val worker6 = worker("master")
         
 
 
