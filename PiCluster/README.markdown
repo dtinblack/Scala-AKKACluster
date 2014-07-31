@@ -31,7 +31,5 @@ sbt "run-main com.example.picluster.PiApp"
 
 TODO
 
-# Licence
 
-[See Licence](https://github.com/dtinblack/iPhone-PubSub/blob/master/LICENSE)
 

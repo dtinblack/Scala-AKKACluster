@@ -1,6 +1,6 @@
 // Master.scala
 //
-// Messages used by the Actors
+// 
 
 package com.example.piakka
 
@@ -12,15 +12,10 @@ import scala.math.abs
 
 object Master {
 
-   case class WorkToBeDone( work: Any )
-   case object WorkIsReady
-   case object NoWorkToBeDone
-   
+   case object WorkerIsReady
    case class Work(start: Int, numberOfElements: Int)
    case class Calculate(worker: ActorRef, calculation: Work) 
    case class Result(worker: ActorRef, value: Double)
-
-
 
 }
 
@@ -65,42 +60,30 @@ class Master ( listener: ActorRef ) extends Actor with ActorLogging {
        startElement += numberOfElements
        
        }
-       
-//       log.info("Work packages generated: {}", workQueue)
-   
+          
    }
    
-    
-   
   def receive = {
-  
-                        
+                          
      case WorkerCreated(worker) => listener ! WorkerJoined(worker)
-                                    worker ! WorkIsReady 
+                                    worker ! WorkerIsReady 
                                     
      case SendWork(worker) =>  worker ! Calculate(worker, workQueue.dequeue()) 
                         
      case Result(worker, value) => pi += value
-    //                            log.info("old value of pi = {} new value of pi = {}", previousPi, pi)                
-                                    if( abs( previousPi - pi ) <= error ) {
-                                     //   log.info("Value of Pi found after:" + startElement)
+                                   if( abs( previousPi - pi ) <= error ) {
                                         listener ! PiApproximation(pi, duration = (System.currentTimeMillis - start).millis)
                                         context.stop(self)
                                     } else {
                                        previousPi = pi
                                        // add another package of work to the workQueue
                                        startElement += numberOfElements
-                                      // log.info("Start element = {}", startElement)
                                        workQueue += Work(startElement, numberOfElements) 
-                                      // log.info("Sending more work to Worker {} ", worker)
-                                       self ! SendWork(worker) 
-                                      
+                                       self ! SendWork(worker)                                       
                                    }                    
                                                                  
   }
   
- 
-
 } // End of Class Master
 
 
