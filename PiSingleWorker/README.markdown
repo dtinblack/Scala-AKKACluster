@@ -18,7 +18,7 @@ TODO
 
 Test Diagram
 
-![Test Diagram](doc/PiSingleWorker.jpg)
+![Test Diagram](doc/PiSingleWorker.jpg?raw=true "Test Diagram")
 
 
 ## Run
