@@ -16,6 +16,10 @@ TODO
 
 TODO
 
+Test Diagram
+
+![Test Diagram](doc/PiSingleWorker.jpg)
+
 
 ## Run
 
